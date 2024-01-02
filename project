@@ -1,0 +1,61 @@
+#include <Servo.h>
+
+const int trigPin = 9;
+const int echoPin = 10;
+const int servoPin = 3;
+const int motorA = 4;
+const int motorB = 5;
+const int enableA = 6;
+const int enableB = 7;
+
+Servo myservo;
+
+void setup() {
+ pinMode(trigPin, OUTPUT);
+ pinMode(echoPin, INPUT);
+ pinMode(motorA, OUTPUT);
+ pinMode(motorB, OUTPUT);
+ pinMode(enableA, OUTPUT);
+ pinMode(enableB, OUTPUT);
+
+ myservo.attach(servoPin);
+
+ Serial.begin(9600);
+}
+
+void loop() {
+ digitalWrite(trigPin, LOW);
+ delayMicroseconds(2);
+ digitalWrite(trigPin, HIGH);
+ delayMicroseconds(10);
+ digitalWrite(trigPin, LOW);
+
+ long duration = pulseIn(echoPin, HIGH);
+ long distance = duration * 0.0344 / 2;
+
+ Serial.print("Distance: ");
+ Serial.println(distance);
+
+ if (distance < 10) {
+    moveMotors();
+ } else {
+    myservo.write(90);
+    stopMotors();
+ }
+
+ delay(500);
+}
+
+void moveMotors() {
+ myservo.write(180);
+
+ digitalWrite(motorA, HIGH);
+ digitalWrite(motorB, LOW);
+ digitalWrite(enableA, HIGH);
+ digitalWrite(enableB, HIGH);
+}
+
+void stopMotors() {
+ digitalWrite(motorA, LOW);
+ digitalWrite(motorB, LOW);
+}
