@@ -1,29 +1,52 @@
 #include <Servo.h>
 
+// Ultrasonic Sensor pins
 const int trigPin = 9;
 const int echoPin = 10;
-const int servoPin = 3;
-const int motorA = 4;
-const int motorB = 5;
-const int enableA = 6;
-const int enableB = 7;
 
+// Servo Motor pins
+const int servoPin = 8;
+
+// Motor Driver pins
+const int motorIn1 = 4;
+const int motorIn2 = 5;
+const int motorIn3 = 6;
+const int motorIn4 = 7;
+
+// Set initial distance
+int distance = 100;
+
+// Create servo object
 Servo myservo;
 
 void setup() {
+ Serial.begin(9600);
+
+ // Set ultrasonic sensor pins
  pinMode(trigPin, OUTPUT);
  pinMode(echoPin, INPUT);
- pinMode(motorA, OUTPUT);
- pinMode(motorB, OUTPUT);
- pinMode(enableA, OUTPUT);
- pinMode(enableB, OUTPUT);
 
+ // Set servo motor pin
  myservo.attach(servoPin);
 
- Serial.begin(9600);
+ // Set motor driver pins
+ pinMode(motorIn1, OUTPUT);
+ pinMode(motorIn2, OUTPUT);
+ pinMode(motorIn3, OUTPUT);
+ pinMode(motorIn4, OUTPUT);
 }
 
 void loop() {
+ distance = readDistance();
+
+ if (distance >= 25) {
+    moveForward();
+ } else {
+    checkDirection();
+ }
+}
+
+int readDistance() {
  digitalWrite(trigPin, LOW);
  delayMicroseconds(2);
  digitalWrite(trigPin, HIGH);
@@ -31,31 +54,57 @@ void loop() {
  digitalWrite(trigPin, LOW);
 
  long duration = pulseIn(echoPin, HIGH);
- long distance = duration * 0.0344 / 2;
 
- Serial.print("Distance: ");
- Serial.println(distance);
+ int distance = duration * 0.0344 / 2;
 
- if (distance < 10) {
-    moveMotors();
- } else {
-    myservo.write(90);
-    stopMotors();
- }
+ return distance;
+}
 
+void moveForward() {
+ digitalWrite(motorIn1, HIGH);
+ digitalWrite(motorIn2, LOW);
+ digitalWrite(motorIn3, HIGH);
+ digitalWrite(motorIn4, LOW);
+}
+
+void moveBackward() {
+ digitalWrite(motorIn1, LOW);
+ digitalWrite(motorIn2, HIGH);
+ digitalWrite(motorIn3, LOW);
+ digitalWrite(motorIn4, HIGH);
+}
+
+void moveLeft() {
+ digitalWrite(motorIn1, LOW);
+ digitalWrite(motorIn2, HIGH);
+ digitalWrite(motorIn3, HIGH);
+ digitalWrite(motorIn4, LOW);
+}
+
+void moveRight() {
+ digitalWrite(motorIn1, HIGH);
+ digitalWrite(motorIn2, LOW);
+ digitalWrite(motorIn3, LOW);
+ digitalWrite(motorIn4, HIGH);
+}
+
+void checkDirection() {
+ myservo.write(90);
  delay(500);
-}
 
-void moveMotors() {
- myservo.write(180);
+ int distanceRight = readDistance();
+ myservo.write(0);
+ delay(500);
 
- digitalWrite(motorA, HIGH);
- digitalWrite(motorB, LOW);
- digitalWrite(enableA, HIGH);
- digitalWrite(enableB, HIGH);
-}
+ int distanceLeft = readDistance();
 
-void stopMotors() {
- digitalWrite(motorA, LOW);
- digitalWrite(motorB, LOW);
+ if (distanceRight >= 25 && distanceLeft >= 25) {
+    moveForward();
+ } else if (distanceRight < 25 && distanceLeft >= 25) {
+    moveRight();
+ } else if (distanceRight >= 25 && distanceLeft < 25) {
+    moveLeft();
+ } else {
+    moveBackward();
+ }
 }
